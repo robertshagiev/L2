@@ -1,0 +1,12 @@
+apple
+apricot
+avocado
+banana
+coconut
+kiwi
+lemon
+lime
+mango
+nectarine
+orange
+papaya
