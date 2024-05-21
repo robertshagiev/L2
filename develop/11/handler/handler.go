@@ -10,7 +10,7 @@ import (
 )
 
 type Handler struct {
-	Usecase *usecase.Usecase
+	usecase ucase
 	mux     serve
 }
 
@@ -19,9 +19,18 @@ type serve interface {
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
+type ucase interface {
+	CreateEvent(event *model.Event) error
+	UpdateEvent(event *model.Event) error
+	DeleteEvent(event *model.Event) error
+	GetEventsForDay(userID int, date time.Time) ([]*model.Storage, error)
+	GetEventsForWeek(userID int, date time.Time) ([]*model.Storage, error)
+	GetEventsForMonth(userID int, date time.Time) ([]*model.Storage, error)
+}
+
 func NewHandler(u *usecase.Usecase) *Handler {
 	mux := http.NewServeMux()
-	h := &Handler{Usecase: u, mux: mux}
+	h := &Handler{usecase: u, mux: mux}
 	h.initRoutes()
 	return h
 }
@@ -50,7 +59,7 @@ func (h *Handler) CreateEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	if err := h.Usecase.CreateEvent(&event); err != nil {
+	if err := h.usecase.CreateEvent(&event); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -68,7 +77,7 @@ func (h *Handler) UpdateEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	if err := h.Usecase.UpdateEvent(&event); err != nil {
+	if err := h.usecase.UpdateEvent(&event); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -85,7 +94,7 @@ func (h *Handler) DeleteEvent(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
-	if err := h.Usecase.DeleteEvent(&event); err != nil {
+	if err := h.usecase.DeleteEvent(&event); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -109,7 +118,7 @@ func (h *Handler) EventsForDay(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid date format", http.StatusBadRequest)
 		return
 	}
-	events, err := h.Usecase.GetEventsForDay(id, date)
+	events, err := h.usecase.GetEventsForDay(id, date)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -134,7 +143,7 @@ func (h *Handler) EventsForWeek(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid date format", http.StatusBadRequest)
 		return
 	}
-	events, err := h.Usecase.GetEventsForWeek(id, date)
+	events, err := h.usecase.GetEventsForWeek(id, date)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -159,7 +168,7 @@ func (h *Handler) EventsForMonth(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid date format", http.StatusBadRequest)
 		return
 	}
-	events, err := h.Usecase.GetEventsForMonth(id, date)
+	events, err := h.usecase.GetEventsForMonth(id, date)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

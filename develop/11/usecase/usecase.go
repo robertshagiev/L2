@@ -2,39 +2,45 @@ package usecase
 
 import (
 	"11/model"
-	"11/repository"
 	"time"
 )
 
 type Usecase struct {
-	Repository *repository.Repository
+	repository rep
 }
 
-func NewUsecase(repository *repository.Repository) *Usecase {
+type rep interface {
+	AddEvent(userID int, storage *model.Storage) error
+	UpdateEvent(userID int, storage *model.Storage) error
+	DeleteEvent(userID int) error
+	GetEventsForPeriod(userID int, start, end time.Time) ([]*model.Storage, error)
+}
+
+func NewUsecase(repository rep) *Usecase {
 	return &Usecase{
-		Repository: repository,
+		repository: repository,
 	}
 }
 
 func (u *Usecase) CreateEvent(event *model.Event) error {
 	storage := getStorageEvent(event)
-	return u.Repository.AddEvent(event.UserID, storage)
+	return u.repository.AddEvent(event.UserID, storage)
 }
 
 func (u *Usecase) UpdateEvent(event *model.Event) error {
 	storage := getStorageEvent(event)
-	return u.Repository.UpdateEvent(event.UserID, storage)
+	return u.repository.UpdateEvent(event.UserID, storage)
 }
 
 func (u *Usecase) DeleteEvent(event *model.Event) error {
-	return u.Repository.DeleteEvent(event.UserID)
+	return u.repository.DeleteEvent(event.UserID)
 }
 
 func (u *Usecase) GetEventsForDay(userID int, date time.Time) ([]*model.Storage, error) {
 	startOfDay := time.Date(date.Year(), date.Month(), date.Day(), 0, 0, 0, 0, date.Location())
 	endOfDay := startOfDay.AddDate(0, 0, 1).Add(-time.Nanosecond)
 
-	return u.Repository.GetEventsForPeriod(userID, startOfDay, endOfDay)
+	return u.repository.GetEventsForPeriod(userID, startOfDay, endOfDay)
 }
 
 func (u *Usecase) GetEventsForWeek(userID int, date time.Time) ([]*model.Storage, error) {
@@ -45,11 +51,11 @@ func (u *Usecase) GetEventsForWeek(userID int, date time.Time) ([]*model.Storage
 	}
 	startOfWeek := date.AddDate(0, 0, offset)
 	endOfWeek := startOfWeek.AddDate(0, 0, 7).Add(-time.Nanosecond)
-	return u.Repository.GetEventsForPeriod(userID, startOfWeek, endOfWeek)
+	return u.repository.GetEventsForPeriod(userID, startOfWeek, endOfWeek)
 }
 
 func (u *Usecase) GetEventsForMonth(userID int, date time.Time) ([]*model.Storage, error) {
 	startOfMonth := time.Date(date.Year(), date.Month(), 1, 0, 0, 0, 0, date.Location())
 	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
-	return u.Repository.GetEventsForPeriod(userID, startOfMonth, endOfMonth)
+	return u.repository.GetEventsForPeriod(userID, startOfMonth, endOfMonth)
 }
